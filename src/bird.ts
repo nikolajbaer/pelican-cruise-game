@@ -36,8 +36,8 @@ function panel(corners: [number, number][], root: RGB, tip: RGB): THREE.BufferGe
 
 export interface Pelican {
   group: THREE.Group;
-  /** `flap` 0 (gliding, wings bowed) to 1 (beating); `lift` 0 to 1 spreads the wings flat on rising air. */
-  animate(dt: number, flap: number, lift: number): void;
+  /** `flap` 0 (gliding, wings bowed) to 1 (beating); `lift` 0 to 1 spreads the wings flat on rising air; `afloat` folds them. */
+  animate(dt: number, flap: number, lift: number, afloat: boolean): void;
 }
 
 export function createPelican(): Pelican {
@@ -59,7 +59,7 @@ export function createPelican(): Pelican {
   const wingMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
   const group = new THREE.Group();
   const model = new THREE.Group();
-  model.scale.setScalar(1.9);
+  model.scale.setScalar(1.2);
   group.add(model);
   model.add(new THREE.Mesh(body, material));
 
@@ -81,9 +81,11 @@ export function createPelican(): Pelican {
 
   let phase = 0;
   let beat = 0;
+  let fold = 0;
   return {
     group,
-    animate(dt, flap, lift) {
+    animate(dt, flap, lift, afloat) {
+      fold += ((afloat ? 1 : 0) - fold) * Math.min(1, dt * (afloat ? 5 : 9));
       beat += (flap - beat) * Math.min(1, dt * 5);
       phase += dt * Math.PI * 2 * (2.1 + 0.6 * beat);
       const stroke = Math.sin(phase) * beat;
@@ -92,10 +94,15 @@ export function createPelican(): Pelican {
       const inner = 0.16 - 0.1 * lift + 0.62 * stroke + 0.02 * Math.sin(phase * 0.13);
       const outer = -0.34 + 0.2 * lift + 0.55 * follow;
       for (const wing of wings) {
-        wing.inner.rotation.z = inner;
-        wing.outer.rotation.z = outer;
+        // Folded, the wing lies back along the body with the hand tucked forward over it.
+        // (the panel is stood on edge against the flank, swept back, and the hand doubled back over the arm).
+        wing.inner.rotation.set(-1.15 * fold, -1.42 * fold, inner * (1 - fold), "YXZ");
+        wing.outer.rotation.set(0, 3.0 * fold, outer * (1 - fold));
+        wing.outer.scale.setScalar(1 - 0.3 * fold);
       }
-      model.position.y = -0.06 * stroke;
+      // On the water it sits low, and rocks a little.
+      model.position.y = -0.06 * stroke - 0.06 * fold;
+      model.rotation.z = 0.05 * fold * Math.sin(phase * 0.21);
     },
   };
 }

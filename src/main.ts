@@ -78,7 +78,8 @@ canvas.addEventListener("pointermove", (event) => {
     stickEl.style.transform = `translate(${stick.ox}px,${stick.oy}px)`;
   }
   stick.x = dx / STICK_RADIUS;
-  stick.y = -dy / STICK_RADIUS;
+  // As on an aircraft's stick: pull back (drag down) to climb, push forward (drag up) to dive.
+  stick.y = dy / STICK_RADIUS;
   knobEl.style.transform = `translate(${dx}px,${dy}px)`;
 });
 const release = (event: PointerEvent) => {
@@ -157,7 +158,7 @@ function frame(now: number) {
   // Until the first touch the pelican flies itself: a lazy weave along the break.
   const auto = !started;
   const steer = auto ? 0.25 * Math.sin(time * 0.35) : Math.max(-1, Math.min(1, stick.x + held("arrowright", "d") - held("arrowleft", "a")));
-  const pitch = auto ? Math.max(-0.4, Math.min(0.4, (6 - flight.clearance) * 0.1)) : Math.max(-1, Math.min(1, stick.y + held("arrowup", "w") - held("arrowdown", "s")));
+  const pitch = auto ? Math.max(-0.4, Math.min(0.4, (6 - flight.clearance) * 0.1)) : Math.max(-1, Math.min(1, stick.y + held("arrowdown", "s") - held("arrowup", "w")));
   stepFlight(flight, steer, pitch, time, dt);
 
   position.set(flight.x, flight.y, flight.z);
@@ -165,18 +166,18 @@ function frame(now: number) {
   const boost = Math.min(1, Math.max(0, (flight.speed - CRUISE_SPEED) / (TOP_SPEED - CRUISE_SPEED)));
   // Nose down a touch when it is drawing speed from the wave.
   pelican.group.rotation.set(flight.climb - 0.1 * Math.min(1, Math.max(0, flight.lift) / 3), -flight.heading, -flight.bank, "YXZ");
-  pelican.animate(dt, flight.flap, Math.min(1, Math.max(0, flight.lift) / 2.5));
+  pelican.animate(dt, flight.flap, Math.min(1, Math.max(0, flight.lift) / 2.5), flight.afloat);
 
   // Chase camera: behind and above, swinging round more slowly than the bird turns, never under the water.
   cam.yaw += (flight.heading - cam.yaw) * (1 - Math.exp(-dt * 2.6));
   const portrait = camera.aspect < 1;
-  const back = (portrait ? 7.6 : 6.0) + 1.5 * boost;
-  target.set(flight.x - Math.sin(cam.yaw) * back, flight.y + 2.8 + 0.5 * boost, flight.z + Math.cos(cam.yaw) * back);
+  const back = (portrait ? 5.4 : 4.4) + 1.2 * boost;
+  target.set(flight.x - Math.sin(cam.yaw) * back, flight.y + 1.9 + 0.4 * boost, flight.z + Math.cos(cam.yaw) * back);
   if (!cam.ready) {
     cam.pos.copy(target);
     cam.ready = true;
   }
-  cam.pos.lerp(target, 1 - Math.exp(-dt * 5));
+  cam.pos.lerp(target, 1 - Math.exp(-dt * 9));
   cam.pos.y = Math.max(cam.pos.y, oceanHeight(cam.pos.x, cam.pos.z, time) + 0.8);
   camera.position.copy(cam.pos);
   look.set(flight.x + Math.sin(cam.yaw) * 9, flight.y - 0.2, flight.z - Math.cos(cam.yaw) * 9);
@@ -192,7 +193,7 @@ function frame(now: number) {
   seaside.update(time, position, camera, {
     x: flight.x,
     z: flight.z,
-    radius: 1.3 + flight.clearance * 0.22,
+    radius: 0.9 + flight.clearance * 0.2,
     strength: 0.3 * Math.exp(-flight.clearance / 9),
   });
   renderer.render(scene, camera);
@@ -205,7 +206,7 @@ function frame(now: number) {
   if (hudTimer <= 0) {
     hudTimer = 0.1;
     glideEl.data = String(Math.round(flight.glide));
-    bestEl.textContent = flight.best >= 50 ? `best ${Math.round(flight.best)} m` : "";
+    bestEl.textContent = flight.afloat && flight.floated > 1.5 ? `${coarse ? "drag down" : "pull back"} to take off` : flight.best >= 50 ? `best ${Math.round(flight.best)} m` : "";
     liftEl.style.width = `${Math.round(cam.liftShown * 100)}%`;
     if (flight.best > savedBest + 25) {
       savedBest = flight.best;

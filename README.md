@@ -3,9 +3,12 @@
 A small, relaxing web game: fly a pelican along an endless beach break and ride the air pushed up in front of
 the incoming waves. Built for a phone held in one hand; works with a keyboard too.
 
-- **Drag anywhere** to steer (a stick appears under your thumb): left and right bank, up climbs, down dives.
-  Arrow keys or WASD on a keyboard.
-- Let go and the pelican holds its height and flaps to cruise. It cannot crash.
+- **Drag anywhere** to steer (a stick appears under your thumb): left and right bank, and pitch is as on an
+  aircraft's stick: drag down (pull back) to climb, drag up (push forward) to dive. Arrow keys or WASD on a keyboard.
+- Let go and the pelican holds its height and flaps to cruise. It cannot crash: a wave about to hit it makes it
+  pull up over the wave by itself.
+- Fly it down onto calm water and it lands and sits there, riding over the swells. It takes off again when you
+  pull back, or by itself when whitewater is about to reach it.
 - **Swoop low in front of a wave face**: the rising air becomes speed and the wings stop beating. Let go of the
   stick on a wave and the bird slides shoreward with it. Flying close to the water also costs less drag.
 - The counter is the distance glided since the last wingbeat.

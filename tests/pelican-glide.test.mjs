@@ -59,16 +59,59 @@ try {
   assert(f.speed > F.CRUISE_SPEED - 1.5, `it keeps cruising speed (${f.speed.toFixed(1)})`);
   assert(run.low > 0.15, "it never goes into the water");
 
-  // Stick held hard down, or hard over toward the sea or the dunes: it skims and is turned back, never lost or sunk.
-  f = F.createFlight();
-  run = fly(f, 60, 0, () => [0, -1]);
-  assert(run.low > 0.15 && f.clearance < 3, `diving ends in a skim over the surface (${run.low.toFixed(2)})`);
+  // Hard over toward the sea or the dunes: it is turned back, never lost, and never put into a dune.
   f = F.createFlight();
   fly(f, 120, 0, () => [-1, 0]);
   assert(f.x > -420 && f.z < -300, `it cannot fly off to sea (${f.x.toFixed(0)})`);
   f = F.createFlight();
   run = fly(f, 120, 0, () => [1, -1]);
-  assert(f.x < 190 && run.low > 0.15, `it cannot fly off inland or into a dune (${f.x.toFixed(0)}, ${run.low.toFixed(2)})`);
+  assert(f.x < 190 && run.low > 0, `it cannot fly off inland or into a dune (${f.x.toFixed(0)}, ${run.low.toFixed(2)})`);
+
+  // Flown down onto calm water it lands and sits; it stays there over unbroken swells, takes off by itself when
+  // whitewater is about to reach it, and takes off when told to climb.
+  const calm = (x, z, t) => { for (let s = 0; s < 4; s += 0.25) if (F.whitewaterComing(x, z, t + s) || W.oceanHeight(x, z, t + s) > 0.5) return false; return true; };
+  let spot = null;
+  for (let t = 5; t < 60 && !spot; t += 0.5) for (let z = -1500; z < 0 && !spot; z += 20) if (calm(-45, z, t) && calm(-45, z - 12, t)) spot = { t, z };
+  assert(spot, "there is a calm patch of water in the surf");
+  f = F.createFlight();
+  Object.assign(f, { x: -45, z: spot.z + 12, y: 1.5 });
+  let clock = spot.t;
+  const advance = (seconds, control, until) => {
+    for (let s = 0; s < seconds; s += 1 / 60, clock += 1 / 60) {
+      F.stepFlight(f, ...control, clock, 1 / 60);
+      assert(f.y - W.oceanHeight(f.x, f.z, clock) > -0.05, `it is never under the water (${(f.y - W.oceanHeight(f.x, f.z, clock)).toFixed(2)} at x=${f.x.toFixed(1)} afloat=${f.afloat} evade=${f.evade.toFixed(2)} climb=${f.climb.toFixed(2)} v=${f.speed.toFixed(1)})`);
+      if (until?.()) return true;
+    }
+    return false;
+  };
+  assert(advance(3, [0, -1], () => f.afloat), "held down onto calm water, it lands");
+  advance(1.5, [0, 0]);
+  assert(f.afloat && f.speed < 1.5, `it sits on the water once the stick is let go (${f.speed.toFixed(1)} m/s)`);
+  assert(advance(40, [0, 0], () => !f.afloat), "it takes off by itself");
+  assert(F.whitewaterComing(f.x, f.z, clock) || f.x > -7, "and that is because whitewater was about to reach it");
+  advance(2, [0, 0]);
+  assert(f.clearance > 1 && f.speed > 7, `the take-off is a climb (${f.clearance.toFixed(1)} m up)`);
+  // Again, and this time the player pulls back.
+  f = F.createFlight();
+  clock = 3;
+  Object.assign(f, { x: -150, z: 0, y: W.oceanHeight(-150, 0, clock) + 1.2 });
+  assert(advance(4, [0, -1], () => f.afloat), "it lands out beyond the break too");
+  advance(1, [0, 0]);
+  assert(f.afloat, "and waits there: unbroken swells pass under it");
+  assert(advance(1, [0, 1], () => !f.afloat), "pulling back takes it off");
+
+  // A wave met in the air: skimming level straight at the incoming waves, it pulls up over them by itself.
+  f = F.createFlight();
+  Object.assign(f, { x: -30, z: 0, y: 0.8, heading: -1 });
+  clock = 10;
+  let pulledUp = 0;
+  for (let s = 0; s < 12; s += 1 / 60, clock += 1 / 60) {
+    // The player holds a low, level line out to sea (and so is steering: no sliding in with a wave).
+    F.stepFlight(f, f.heading > -0.9 ? -0.5 : 0.31, f.clearance > 1 ? -0.25 : 0, clock, 1 / 60);
+    assert(!f.afloat && f.y - W.oceanHeight(f.x, f.z, clock) > 0.1, `a wave never catches it (${(f.y - W.oceanHeight(f.x, f.z, clock)).toFixed(2)} m at x=${f.x.toFixed(0)})`);
+    if (f.evade > 1.05) pulledUp++;
+  }
+  assert(pulledUp >= 1, "it pulled up over a wave");
 
   // Riding: low on the face of a big wave, the rising air is worth speed and the wings stop beating.
   let ride = null;
