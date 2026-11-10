@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f7c79a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Pelican Glide</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#f3c9a2;color:#fff;font:15px/1.4 ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;pointer-events:none;text-shadow:0 1px 6px rgba(20,50,70,.55)}
+#stats{top:calc(14px + env(safe-area-inset-top));left:calc(16px + env(safe-area-inset-left));transition:opacity .8s}
+#glide{font-size:26px;font-weight:700;letter-spacing:.01em}
+#glide small{font-size:13px;font-weight:600;opacity:.85;margin-left:4px}
+#best{font-size:12px;opacity:.8}
+#lift{margin-top:8px;width:92px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden}
+#lift i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#fff,#ffe9a8)}
+#mute{position:fixed;top:calc(10px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));width:44px;height:44px;border:0;border-radius:50%;
+  background:rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#mute.off{opacity:.55}
+#stick{position:fixed;left:0;top:0;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:2px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.07);opacity:0;transition:opacity .2s;pointer-events:none}
+#stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.6)}
+#title{inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:calc(11vh + env(safe-area-inset-top)) 24px 0;text-align:center;transition:opacity 1.2s}
+#title h1{margin:0;font-size:clamp(34px,9vw,60px);font-weight:800;letter-spacing:.02em}
+#title p{margin:8px 0 0;max-width:340px;font-size:15px;font-weight:500}
+#title .go{margin-top:18px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.9;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.hidden{opacity:0}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="stats" class="hud hidden">
+  <div id="glide">0<small>m glide</small></div>
+  <div id="best"></div>
+  <div id="lift"><i></i></div>
+</div>
+<button id="mute" aria-label="Sound">&#9834;</button>
+<div id="stick"><i></i></div>
+<div id="title" class="hud">
+  <h1>Pelican Glide</h1>
+  <p>Drag to steer. Swoop low along the face of a rolling wave and let the rising air carry you.</p>
+  <div class="go">Touch to fly</div>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
