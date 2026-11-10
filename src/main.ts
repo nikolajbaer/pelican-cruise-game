@@ -42,7 +42,11 @@ const sound = createSoundscape();
 let started = false;
 
 function begin() {
-  sound.start();
+  try {
+    sound.start();
+  } catch {
+    // A browser that will not give us sound still gets the game.
+  }
   if (started) return;
   started = true;
   document.getElementById("title")!.classList.add("hidden");

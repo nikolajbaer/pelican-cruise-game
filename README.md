@@ -20,6 +20,12 @@ npm run typecheck
 npm test           # the sea and the flight model, without a browser
 ```
 
+## Deploy
+
+The page is TypeScript, so it has to be built; serving the repository as it is shows only the title. A push to
+`main` builds it and publishes `dist/` to GitHub Pages (`.github/workflows/deploy.yml`). For that, the repository's
+Settings > Pages > Source must be "GitHub Actions".
+
 ## How it is made
 
 Three.js and a few shaders; no art or sound files.
